@@ -1,0 +1,138 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def read_patients(file_name="patients_data.csv"):
+    try:
+        df = pd.read_csv(file_name)
+        print(f"Dataset loaded successfully with {len(df)} rows and {len(df.columns)} columns.")
+        return df
+    except FileNotFoundError:
+        print(f"File '{file_name}' not found. Creating a new dataset.")
+        return pd.DataFrame(columns=["Name", "Patient Number", "Age", "Gender", "Disease", "Disease Type", "Diagnosis Date", "Family History"])
+
+
+def display_patients(df):
+    if df.empty:
+        print("No patient data available.")
+    else:
+        print(df.to_string(index=False))
+
+
+def add_patient(df):
+    name = input("Name: ")
+    patient_number = input("Patient Number: ")
+
+    if patient_number in df["Patient Number"].values:
+        print("Error: Patient Number already exists. Please enter a unique number.")
+        return df
+
+    try:
+        age = int(input("Age: "))
+        if age <= 0:
+            raise ValueError("Age must be a positive number.")
+    except ValueError as e:
+        print(f"Invalid input for age: {e}")
+        return df
+
+    gender = input("Gender (Male/Female): ").capitalize()
+    if gender not in ["Male", "Female"]:
+        print("Invalid gender. Please enter 'Male' or 'Female'.")
+        return df
+
+    disease = input("Disease: ")
+    disease_type = input("Disease Type (Genetic/Non-genetic): ").capitalize()
+    if disease_type not in ["Genetic", "Non-genetic"]:
+        print("Invalid disease type. Please enter 'Genetic' or 'Non-genetic'.")
+        return df
+
+    diagnosis_date = input("Diagnosis Date (YYYY-MM-DD): ")
+    family_history = input("Family History (Yes/No): ").capitalize()
+    if family_history not in ["Yes", "No"]:
+        print("Invalid input for family history. Please enter 'Yes' or 'No'.")
+        return df
+
+    new_patient = {
+        "Name": name,
+        "Patient Number": patient_number,
+        "Age": age,
+        "Gender": gender,
+        "Disease": disease,
+        "Disease Type": disease_type,
+        "Diagnosis Date": diagnosis_date,
+        "Family History": family_history,
+    }
+
+    new_patient_df = pd.DataFrame([new_patient])
+    df = pd.concat([df, new_patient_df], ignore_index=True)
+
+    print("Patient added successfully!")
+    return df
+
+
+def analyze_and_visualize(df):
+    if df.empty:
+        print("No data to analyze.")
+        return
+
+    df["Age"] = pd.to_numeric(df["Age"], errors="coerce")
+    if df["Age"].isnull().all():
+        print("No valid age data to analyze.")
+        return
+
+    avg_age = df["Age"].mean()
+    gender_distribution = df["Gender"].value_counts()
+    disease_types = df["Disease Type"].value_counts()
+
+    print(f"Average Age: {avg_age:.2f}")
+    print("\nGender Distribution:\n", gender_distribution)
+    print("\nDisease Type Distribution:\n", disease_types)
+
+    plt.figure(figsize=(8, 5))
+    gender_distribution.plot(kind="bar", title="Gender Distribution", color=["skyblue", "lightgreen"])
+    plt.xlabel("Gender")
+    plt.ylabel("Count")
+    plt.savefig("gender_distribution.png")
+    plt.show()
+
+    plt.figure(figsize=(8, 5))
+    disease_types.plot(kind="bar", title="Disease Type Distribution", color=["orange", "purple"])
+    plt.xlabel("Disease Type")
+    plt.ylabel("Count")
+    plt.savefig("disease_type_distribution.png")
+    plt.show()
+
+
+def save_data(df, file_name="patients_data.csv"):
+    df.to_csv(file_name, index=False)
+    print(f"Data saved successfully to {file_name}")
+
+
+def main():
+    patients_df = read_patients()
+
+    while True:
+        print("\n" + "="*30)
+        print("Choose an option:")
+        print("1. Display current patients")
+        print("2. Add a new patient")
+        print("3. Analyze and visualize data")
+        print("4. Save data and exit")
+        print("="*30)
+
+        choice = input("Enter your choice (1, 2, 3, 4): ")
+
+        if choice == "1":
+            display_patients(patients_df)
+        elif choice == "2":
+            patients_df = add_patient(patients_df)
+        elif choice == "3":
+            analyze_and_visualize(patients_df)
+        elif choice == "4":
+            save_data(patients_df)
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
